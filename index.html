@@ -5,25 +5,32 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 	<title>Composition API to script setup</title>
-  <script type="module" crossorigin src="./assets/index-BHsUlrnP.js"></script>
+  <script type="module" crossorigin src="./assets/index-CFuEqf91.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DVKSaWsW.css">
 </head>
 <body>
 <nav>
 	<h1>Composition API to script setup</h1>
 	<label>
+		<span>Converter</span>
 		<select name="select" id="selectConverter">
 			<option value="vue-comp-to-setup" selected>Vue composition to setup</option>
 			<option value="vue-defineProps-to-withDefaults">Convert vue defineProps options to withDefaults</option>
+			<option value="vue-withDefaults-props-to-reactivity-props">Convert vue withDefaults props to reactivity props</option>
 		</select>
+		<span>Order</span>
 		<select name="selectOrder" id="blockOrder">
 			<option value="SetupTemplateStyle" selected>Order - Setup template style</option>
 			<option value="TemplateSetupStyle">Order - Template Setup Style</option>
 		</select>
 	</label>
 	<label>
-		<input id="propsOptionsLike" type="checkbox">
-		<span>Props options like</span>
+		<span>Props style</span>
+		<select name="selectPropsStyle" id="propsStyle">
+			<option value="WithDefaults" selected>With defaults</option>
+			<option value="ReactivityProps">Reactivity props</option>
+			<option value="DefinePropsOptions">Define props options</option>
+		</select>
 	</label>
 </nav>
 <div id="container">
