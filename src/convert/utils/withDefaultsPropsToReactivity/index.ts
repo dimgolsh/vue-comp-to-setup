@@ -3,10 +3,14 @@ import { ConvertResult } from '../../types';
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
-import { convertObjectPattern, convertObjectProperty, replacePropsMemberExpression } from '../../defineProps';
+import { convertObjectProperty, replacePropsMemberExpression } from '../../defineProps';
 import generate from '@babel/generator';
 import { generateVue } from '../../generateVue';
 import { formatCode } from '../../formatCode';
+
+const isDefineProps = (path: t.CallExpression) => {
+	return t.isCallExpression(path) && t.isIdentifier(path.callee) && path.callee.name === 'defineProps';
+};
 
 const convertProps = async (content: string) => {
 	const ast = parse(content, {
@@ -15,37 +19,62 @@ const convertProps = async (content: string) => {
 		attachComment: true,
 	});
 
-	let newProperties: t.ObjectProperty[] = [];
-	let oldProperties: t.ObjectProperty[] = [];
-	let defineProps: t.CallExpression;
+	let properties: t.ObjectProperty[] = [];
 
+	// Get properties from withDefaults
 	traverse(ast, {
 		CallExpression(path) {
-			if (t.isIdentifier(path.node.callee)) {
-				if (path.node.callee.name === 'withDefaults') {
-					defineProps = path.node.arguments[0] as t.CallExpression;
-					const properties = path.node.arguments[1] as t.ObjectExpression;
-					oldProperties = properties.properties.filter((prop) => t.isObjectProperty(prop)) as t.ObjectProperty[];
-					newProperties = properties.properties.map((prop) => convertObjectProperty(prop as t.ObjectProperty));
-
-					path.replaceWith(defineProps);
-
-					if (path.parent && t.isVariableDeclarator(path.parent)) {
-						path.parent.id = t.objectPattern(newProperties);
-					}
-
-					path.skip();
+			if (t.isIdentifier(path.node.callee) && path.node.callee.name === 'withDefaults') {
+				const params = path.node.arguments[1];
+				if (t.isObjectExpression(params)) {
+					const members = params.properties.filter((prop) => t.isObjectProperty(prop));
+					properties = members.map(convertObjectProperty);
 				}
 			}
 		},
 	});
 
+	// Get properties from defineProps
+	traverse(ast, {
+		TSTypeParameterInstantiation(path) {
+			if (t.isCallExpression(path.parent) && isDefineProps(path.parent)) {
+				const params = path.node.params[0] as t.TSTypeLiteral;
+				const members = params?.members.filter((member) => t.isTSPropertySignature(member));
+				const filtered = members?.filter(
+					(member) => !properties.find((prop) => (prop.key as t.Identifier).name === (member.key as t.Identifier).name),
+				);
+				properties.push(...filtered?.map((member) => t.objectProperty(member.key, member.key, false, true)));
+			}
+		},
+	});
+
+	// Replace withDefaults with defineProps
+	traverse(ast, {
+		CallExpression(path) {
+			if (t.isIdentifier(path.node.callee) && path.node.callee.name === 'withDefaults') {
+				const defineProps = path.node.arguments[0] as t.CallExpression;
+				path.replaceWith(defineProps);
+			}
+		},
+	});
+
+	// Replace const props = defineProps() with defineProps
+	traverse(ast, {
+		VariableDeclaration(path) {
+			const decl = path.node.declarations[0];
+			if (t.isVariableDeclarator(decl) && isDefineProps(decl.init as t.CallExpression)) {
+				path.replaceWith(decl.init);
+			}
+		},
+	});
+
+	// Add const {...} = defineProps()
 	traverse(ast, {
 		ExpressionStatement(path) {
-			if (t.isCallExpression(path.node.expression) && t.isIdentifier(path.node.expression.callee)) {
-				if (path.node.expression.callee.name === 'defineProps') {
-					path.replaceWith(convertObjectPattern(defineProps, oldProperties));
-				}
+			if (t.isCallExpression(path.node.expression) && isDefineProps(path.node.expression)) {
+				const pattern = t.variableDeclarator(t.objectPattern(properties), path.node.expression);
+				const decl = t.variableDeclaration('const', [pattern]);
+				path.replaceWith(decl);
 			}
 		},
 	});
@@ -53,6 +82,7 @@ const convertProps = async (content: string) => {
 	return ast;
 };
 
+// old name
 export const withDefaultsPropsToReactivityProps = async (content: string): Promise<ConvertResult> => {
 	if (!content) {
 		return {
@@ -105,4 +135,8 @@ export const withDefaultsPropsToReactivityProps = async (content: string): Promi
 			errors: ['⚠ Failed to convert', e.toString()],
 		};
 	}
+};
+
+export const definePropsToReactivityProps = async (content: string): Promise<ConvertResult> => {
+	return withDefaultsPropsToReactivityProps(content);
 };

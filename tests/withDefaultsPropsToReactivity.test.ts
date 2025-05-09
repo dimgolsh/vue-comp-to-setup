@@ -17,7 +17,6 @@ const props = withDefaults(defineProps<{
   injectKey: '',
   disabled: false,
   hideTooltip: false,
-  defaultPromptText: ''
 });
   `;
 
@@ -28,7 +27,7 @@ const {
   injectKey = '',
   disabled = false,
   hideTooltip = false,
-  defaultPromptText = ''
+  defaultPromptText
 } = defineProps<{
   modelValue?: string | number;
   tooltipText?: string;
@@ -101,8 +100,7 @@ const props = withDefaults(defineProps<{
   tooltipText: '',
   injectKey: '',
   disabled: false,
-  hideTooltip: false,
-  defaultPromptText: ''
+  hideTooltip: false
 });
 
 const value = ref(props.modelValue);
@@ -117,7 +115,7 @@ const {
   injectKey = '',
   disabled = false,
   hideTooltip = false,
-  defaultPromptText = ''
+  defaultPromptText
 } = defineProps<{
   modelValue?: string | number;
   tooltipText?: string;
@@ -129,6 +127,42 @@ const {
 
 const value = ref(modelValue);
 </script>
+`;
+
+	const { content } = await withDefaultsPropsToReactivityProps(code);
+
+	expect(clean(content)).toEqual(clean(resultCode));
+});
+
+
+test('convert defineProps to reactivity props', async () => {
+	const code = `
+defineProps<{
+  modelValue?: string | number;
+  tooltipText?: string;
+  injectKey?: string;
+  disabled?: boolean;
+  hideTooltip?: boolean;
+  defaultPromptText?: string;
+}>();
+  `;
+
+	const resultCode = `
+const {
+  modelValue,
+  tooltipText,
+  injectKey,
+  disabled,
+  hideTooltip,
+  defaultPromptText
+} = defineProps<{
+  modelValue?: string | number;
+  tooltipText?: string;
+  injectKey?: string;
+  disabled?: boolean;
+  hideTooltip?: boolean;
+  defaultPromptText?: string;
+}>();
 `;
 
 	const { content } = await withDefaultsPropsToReactivityProps(code);

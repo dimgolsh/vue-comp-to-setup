@@ -127,6 +127,7 @@ export const getDefinePropsWithSignature = (path: t.ObjectExpression) => {
 
 	const signature: t.TSPropertySignature[] = [];
 	const defaults: Map<string, t.Expression> = new Map();
+	const otherProperties: t.ObjectProperty[] = [];
 
 	for (const prop of path.properties) {
 		const result = convertProp(prop as t.ObjectProperty);
@@ -135,6 +136,8 @@ export const getDefinePropsWithSignature = (path: t.ObjectExpression) => {
 		}
 		if (result?.default) {
 			defaults.set(result.name, result.default);
+		} else {
+			otherProperties.push(t.objectProperty(t.identifier(result.name), t.identifier(result.name), false, true));
 		}
 	}
 
@@ -146,13 +149,15 @@ export const getDefinePropsWithSignature = (path: t.ObjectExpression) => {
 		properties.push(t.objectProperty(t.identifier(name), value));
 	});
 
-	if (defaults.size === 0) {
-		return { defineProps, properties: [] };
+
+	if (defaults.size === 0 && otherProperties.length === 0) {
+		return { defineProps, properties: [], otherProperties: [] };
 	}
 
 	return {
 		defineProps,
 		properties,
+		otherProperties
 	};
 };
 
@@ -227,9 +232,13 @@ export const convertObjectProperty = (property: t.ObjectProperty) => {
 	);
 };
 
-export const convertObjectPattern = (defineProps: t.CallExpression, properties: t.ObjectProperty[]) => {
-	const pattern = t.variableDeclarator(t.objectPattern(properties.map(convertObjectProperty)), defineProps);
+export const createObjectPattern = (properties: t.ObjectProperty[], defineProps: t.CallExpression) => {
+	const pattern = t.variableDeclarator(t.objectPattern([...properties]), defineProps);
 	return t.variableDeclaration('const', [pattern]);
+}
+
+export const convertObjectPattern = (defineProps: t.CallExpression, properties: t.ObjectProperty[]) => {
+	return createObjectPattern(properties.map(convertObjectProperty), defineProps);
 };
 
 export const getReactivityProps = (path: t.ObjectExpression) => {
@@ -239,7 +248,7 @@ export const getReactivityProps = (path: t.ObjectExpression) => {
 		return null;
 	}
 
-	const { defineProps, properties } = getDefinePropsWithSignature(propsProperty.value as t.ObjectExpression);
+	const { defineProps, properties, otherProperties } = getDefinePropsWithSignature(propsProperty.value as t.ObjectExpression);
 
 	const setup = getSetup(path.properties);
 	if (!setup) {
@@ -248,7 +257,8 @@ export const getReactivityProps = (path: t.ObjectExpression) => {
 
 	const { props } = extractSetupParams(setup);
 	if (props) {
-		return convertObjectPattern(defineProps, properties);
+		const assigments = properties.map(convertObjectProperty);
+		return createObjectPattern([...assigments, ...otherProperties], defineProps);
 	}
 
 	return t.expressionStatement(defineProps);

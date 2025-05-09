@@ -15,7 +15,7 @@
 		<select name="select" id="selectConverter">
 			<option value="vue-comp-to-setup" selected>Vue composition to setup</option>
 			<option value="vue-defineProps-to-withDefaults">Convert vue defineProps options to withDefaults</option>
-			<option value="vue-withDefaults-props-to-reactivity-props">Convert vue withDefaults props to reactivity props</option>
+			<option value="vue-withDefaults-props-to-reactivity-props">Convert vue withDefaults/defineProps to reactivity props</option>
 		</select>
 		<span>Order</span>
 		<select name="selectOrder" id="blockOrder">
@@ -31,6 +31,7 @@
 			<option value="DefinePropsOptions">Define props options</option>
 		</select>
 	</label>
+	<button id="resetButton" class="reset-button">Reset to Default</button>
 </nav>
 <div id="container">
 	<div id="editor" class="editor"></div>
