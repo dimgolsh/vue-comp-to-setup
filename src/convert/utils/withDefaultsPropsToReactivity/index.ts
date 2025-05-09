@@ -1,4 +1,4 @@
-import { isSFC, parseVueFromContent } from '../../utils';
+import { isSFC, parseVueFromContent, wrapNewLineComment } from '../../utils';
 import { ConvertResult } from '../../types';
 import { parse } from '@babel/parser';
 import traverse from '@babel/traverse';
@@ -114,9 +114,13 @@ export const withDefaultsPropsToReactivityProps = async (content: string): Promi
 			}
 
 			const newAst = await convertProps(desc.scriptSetup.content);
-
 			replacePropsMemberExpression(newAst);
-			const code = generate(newAst, { jsescOption: { quotes: 'single' } }).code;
+
+			const imports = newAst.program.body.filter((n) => t.isImportDeclaration(n));
+			const body = newAst.program.body.filter((n) => !t.isImportDeclaration(n));
+
+			const newAstFormate = t.program([...imports, ...body.map((n) => wrapNewLineComment(n))]);
+			const code = generate(newAstFormate, { jsescOption: { quotes: 'single' } }).code;
 			const rawVue = generateVue(desc, code);
 			const format = await formatCode(rawVue);
 
