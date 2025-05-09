@@ -7,3 +7,5 @@ export { checkCompositionApi, checkCompositionApiFile } from './cli/check-compos
 
 export { definePropsToReactivityProps } from './convert/utils/withDefaultsPropsToReactivity';
 export { definePropsToWithDefaults } from './convert/utils/definePropsToWithDefaults';
+
+export { PropsStyle, type ConvertOptions, type ConvertFileOptions, BlockOrder } from './convert/types';
