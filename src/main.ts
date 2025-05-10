@@ -40,12 +40,16 @@ const updateURL = (state: State, shouldClear: boolean = false) => {
 		return;
 	}
 	
-	const params = new URLSearchParams();
-	params.set('converter', state.converter);
-	params.set('blockOrder', state.blockOrder);
-	params.set('propsStyle', state.propsStyle);
-	params.set('code', btoa(state.code));
-	window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+	try {
+		const params = new URLSearchParams();
+		params.set('converter', state.converter);
+		params.set('blockOrder', state.blockOrder);
+		params.set('propsStyle', state.propsStyle);
+		params.set('code', btoa(state.code));
+		window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+	} catch (error) {
+		console.error('Failed to update URL', error);
+	}
 };
 
 const getStateFromURL = (): Partial<State> => {
