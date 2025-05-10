@@ -149,7 +149,6 @@ export const getDefinePropsWithSignature = (path: t.ObjectExpression) => {
 		properties.push(t.objectProperty(t.identifier(name), value));
 	});
 
-
 	if (defaults.size === 0 && otherProperties.length === 0) {
 		return { defineProps, properties: [], otherProperties: [] };
 	}
@@ -157,7 +156,7 @@ export const getDefinePropsWithSignature = (path: t.ObjectExpression) => {
 	return {
 		defineProps,
 		properties,
-		otherProperties
+		otherProperties,
 	};
 };
 
@@ -235,7 +234,7 @@ export const convertObjectProperty = (property: t.ObjectProperty) => {
 export const createObjectPattern = (properties: t.ObjectProperty[], defineProps: t.CallExpression) => {
 	const pattern = t.variableDeclarator(t.objectPattern([...properties]), defineProps);
 	return t.variableDeclaration('const', [pattern]);
-}
+};
 
 export const convertObjectPattern = (defineProps: t.CallExpression, properties: t.ObjectProperty[]) => {
 	return createObjectPattern(properties.map(convertObjectProperty), defineProps);
@@ -248,20 +247,12 @@ export const getReactivityProps = (path: t.ObjectExpression) => {
 		return null;
 	}
 
-	const { defineProps, properties, otherProperties } = getDefinePropsWithSignature(propsProperty.value as t.ObjectExpression);
+	const { defineProps, properties, otherProperties } = getDefinePropsWithSignature(
+		propsProperty.value as t.ObjectExpression,
+	);
 
-	const setup = getSetup(path.properties);
-	if (!setup) {
-		return t.expressionStatement(defineProps);
-	}
-
-	const { props } = extractSetupParams(setup);
-	if (props) {
-		const assigments = properties.map(convertObjectProperty);
-		return createObjectPattern([...assigments, ...otherProperties], defineProps);
-	}
-
-	return t.expressionStatement(defineProps);
+	const assigments = properties.map(convertObjectProperty);
+	return createObjectPattern([...assigments, ...otherProperties], defineProps);
 };
 
 export const replacePropsMemberExpression = (ast: ParseResult<t.File>) => {
