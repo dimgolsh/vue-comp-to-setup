@@ -26,6 +26,32 @@ test('convert Vue file to script setup', async () => {
 	expect(content).not.toContain('defineComponent');
 });
 
+test('convert Vue file to script setup with import css', async () => {
+	const code = `
+    <script lang="ts">
+      import { defineComponent, ref } from 'vue';
+      import 'vue3-virtual-scroller/dist/vue3-virtual-scroller.css';
+      export default defineComponent({
+        name: 'MyComponent',
+        props: {
+          modelValue: { type: String, required: true },
+        },
+        setup(props) {
+          const value = ref(props.modelValue);
+          return { value };
+        },
+      });
+    </script>
+  `;
+
+	const { content } = await convert(code);
+
+	const resultCode = `
+ <scriptsetuplang="ts">import{ref}from'vue';import 'vue3-virtual-scroller/dist/vue3-virtual-scroller.css';defineOptions({name:'MyComponent'});constprops=defineProps<{modelValue:string;}>();constvalue=ref(props.modelValue);</script>`;
+
+	expect(clean(content)).toEqual(clean(resultCode));
+});
+
 test('convert props to defineProps', async () => {
 	const code = `
     <script lang="ts">

@@ -4,6 +4,7 @@ import * as t from '@babel/types';
 
 export const getImports = (ast: ParseResult<t.File>) => {
 	const excludesNamesImportSpecifier = ['defineComponent', 'PropType'];
+	const excludesNamesSource = ['vue'];
 
 	// Remove excluded imports
 	traverse(ast, {
@@ -18,7 +19,8 @@ export const getImports = (ast: ParseResult<t.File>) => {
 
 	traverse(ast, {
 		ImportDeclaration(node) {
-			if (node.node.specifiers.length === 0) {
+			const isExcludeSource = excludesNamesSource.includes(node.node.source.value);
+			if (node.node.specifiers.length === 0 && isExcludeSource) {
 				node.remove();
 			}
 		},
