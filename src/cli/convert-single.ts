@@ -2,7 +2,7 @@ import { existsFileSync, getFullPath, isVueFile, readFile, writeFile } from '../
 import chalk from 'chalk';
 import { convert } from '../convert';
 import { formatCode } from './format-code';
-import { ConvertFileOptions } from '../convert/types';
+import { BlockOrder, ConvertFileOptions, PropsStyle } from '../convert/types';
 
 export const convertSingleFile = async (filepath: string, options: ConvertFileOptions) => {
 	try {
@@ -17,9 +17,19 @@ export const convertSingleFile = async (filepath: string, options: ConvertFileOp
 			console.warn(chalk.yellow(`⚠ File not found: ${filepath}`));
 			return null;
 		}
-		const { view = false, propsOptionsLike = false } = options ?? {};
+		const {
+			view = false,
+			propsOptionsLike = false,
+			propsStyle = PropsStyle.ReactivityProps,
+			blockOrder = BlockOrder.SetupTemplateStyle,
+		} = options ?? {};
+
 		const fileContent = await readFile(filepath);
-		const { isOk, content, errors } = await convert(fileContent, { propsOptionsLike }); // Конвертация
+		const { isOk, content, errors } = await convert(fileContent, {
+			propsOptionsLike,
+			propsStyle,
+			blockOrder,
+		}); // Конвертация
 
 		if (isOk) {
 			if (view) {
