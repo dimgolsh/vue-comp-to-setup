@@ -176,3 +176,82 @@ test('should scoped lang styles must be properly maintained', async () => {
 
 	expect(content).toEqual(expected);
 });
+
+test('should handle external style file with src attribute', async () => {
+	const code = `<script lang=ts>
+	export default defineComponent({
+		setup() {
+			return {
+				msg: 'Hello',
+			};
+		}
+	});
+</script>
+<style src="./styles.css" />`;
+
+	const expected = `<script setup lang="ts">\r\n	const msg = 'Hello';\r\n</script>\r\n\r\n<style src="./styles.css" />\r\n`;
+
+	const { content } = await convert(code);
+
+	expect(content).toEqual(expected);
+});
+
+test('should handle external style file with lang and src attributes', async () => {
+	const code = `<script lang=ts>
+	export default defineComponent({
+		setup() {
+			return {
+				msg: 'Hello',
+			};
+		}
+	});
+</script>
+<style lang="less" src="./styles.less" />`;
+
+	const expected = `<script setup lang="ts">\r\n	const msg = 'Hello';\r\n</script>\r\n\r\n<style lang="less" src="./styles.less" />\r\n`;
+
+	const { content } = await convert(code);
+
+	expect(content).toEqual(expected);
+});
+
+test('should handle external style file with lang, scoped and src attributes', async () => {
+	const code = `<script lang=ts>
+	export default defineComponent({
+		setup() {
+			return {
+				msg: 'Hello',
+			};
+		}
+	});
+</script>
+<style lang="scss" scoped src="./styles.scss" />`;
+
+	const expected = `<script setup lang="ts">\r\n	const msg = 'Hello';\r\n</script>\r\n\r\n<style lang="scss" scoped src="./styles.scss" />\r\n`;
+
+	const { content } = await convert(code);
+
+	expect(content).toEqual(expected);
+});
+
+test('should handle multiple styles with mixed inline and external sources', async () => {
+	const code = `<script lang=ts>
+	export default defineComponent({
+		setup() {
+			return {
+				msg: 'Hello',
+			};
+		}
+	});
+</script>
+<style lang="scss" scoped src="./styles.scss" />
+<style lang="less">
+.local { color: blue; }
+</style>`;
+
+	const expected = `<script setup lang="ts">\r\n	const msg = 'Hello';\r\n</script>\r\n\r\n<style lang="scss" scoped src="./styles.scss" />\r\n<style lang="less">\r\n\t.local { color: blue; }\r\n</style>\r\n`;
+
+	const { content } = await convert(code);
+
+	expect(content).toEqual(expected);
+});
